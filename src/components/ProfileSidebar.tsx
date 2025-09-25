@@ -1,22 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Building, 
-  Edit, 
-  Save, 
-  Settings, 
-  LogOut, 
-  CheckCircle,
-  Star,
-  Loader2,
-  RefreshCw,
-  AlertCircle
-} from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Calendar, Building, CreditCard as Edit, Save, Settings, LogOut, CheckCircle, Star, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useOrganization } from '../contexts/OrganizationContext';
 import { authService } from '../services/authService';
