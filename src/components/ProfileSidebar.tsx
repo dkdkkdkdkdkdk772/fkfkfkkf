@@ -12,11 +12,15 @@ import {
   Settings, 
   LogOut, 
   CheckCircle,
-  Star
+  Star,
+  Loader2,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useOrganization } from '../contexts/OrganizationContext';
 import { authService } from '../services/authService';
+import { dashboardService, DashboardStats } from '../services/dashboardService';
 
 interface ProfileSidebarProps {
   isOpen: boolean;
@@ -45,6 +49,9 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const { t } = useLanguage();
   const { currentOrganization } = useOrganization();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
   
   // Get current user data from auth service
   const currentUser = authService.getStoredUser();
@@ -61,6 +68,32 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   });
   
   const [editedProfile, setEditedProfile] = useState<UserProfile>(userProfile);
+
+  // Load dashboard stats when sidebar opens
+  useEffect(() => {
+    if (isOpen && currentOrganization) {
+      loadDashboardStats();
+    }
+  }, [isOpen, currentOrganization]);
+
+  const loadDashboardStats = async () => {
+    try {
+      setStatsLoading(true);
+      setStatsError(null);
+      const stats = await dashboardService.getDashboardStats();
+      setDashboardStats(stats);
+    } catch (err) {
+      console.error('Failed to load dashboard stats:', err);
+      setStatsError(err instanceof Error ? err.message : 'Failed to load statistics');
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const retryLoadStats = () => {
+    setStatsError(null);
+    loadDashboardStats();
+  };
 
   const handleEditProfile = () => {
     setEditedProfile(userProfile);
@@ -328,36 +361,104 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
           {/* Quick Stats */}
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Statistiques Rapides</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Statistiques Rapides</h3>
               <button
-                onClick={() => onStatsClick('contacts')}
-                className="text-center p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-all duration-300 group hover:shadow-lg transform hover:scale-105"
+                onClick={retryLoadStats}
+                disabled={statsLoading}
+                className="text-blue-600 hover:text-blue-700 transition-colors p-1 rounded-md hover:bg-blue-50 disabled:opacity-50"
+                title="Actualiser les statistiques"
               >
-                <div className="text-2xl font-bold text-green-600 group-hover:scale-110 transition-transform">156</div>
-                <div className="text-sm text-gray-600">Contacts</div>
+                <RefreshCw size={16} className={statsLoading ? 'animate-spin' : ''} />
               </button>
-              <button
-                onClick={() => onStatsClick('opportunities')}
-                className="text-center p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all duration-300 group hover:shadow-lg transform hover:scale-105"
-              >
-                <div className="text-2xl font-bold text-blue-600 group-hover:scale-110 transition-transform">23</div>
-                <div className="text-sm text-gray-600">Opportunités</div>
-              </button>
-              <button
-                onClick={() => onStatsClick('tasks')}
-                className="text-center p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-all duration-300 group hover:shadow-lg transform hover:scale-105"
-              >
-                <div className="text-2xl font-bold text-purple-600 group-hover:scale-110 transition-transform">12</div>
-                <div className="text-sm text-gray-600">Tâches</div>
-              </button>
-              <button
-                onClick={() => onStatsClick('appointments')}
-                className="text-center p-4 bg-orange-50 rounded-xl hover:bg-orange-100 transition-all duration-300 group hover:shadow-lg transform hover:scale-105"
-              >
-                <div className="text-2xl font-bold text-orange-600 group-hover:scale-110 transition-transform">8</div>
-                <div className="text-sm text-gray-600">Rendez-vous</div>
-              </button>
+            </div>
+            
+            {statsError ? (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+                <AlertCircle size={24} className="mx-auto text-red-500 mb-2" />
+                <p className="text-red-800 text-sm font-medium mb-2">Erreur de chargement</p>
+                <p className="text-red-600 text-xs mb-3">{statsError}</p>
+                <button
+                  onClick={retryLoadStats}
+                  className="text-red-600 hover:text-red-700 text-xs font-medium px-2 py-1 rounded-md hover:bg-red-100 transition-colors"
+                >
+                  Réessayer
+                </button>
+              </div>
+            ) : statsLoading ? (
+              <div className="grid grid-cols-2 gap-4">
+                {[...Array(4)].map((_, index) => (
+                  <div key={index} className="text-center p-4 bg-gray-50 rounded-xl animate-pulse">
+                    <div className="w-8 h-8 bg-gray-200 rounded mx-auto mb-2"></div>
+                    <div className="w-12 h-3 bg-gray-200 rounded mx-auto"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => onStatsClick('contacts')}
+                  className="text-center p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-all duration-300 group hover:shadow-lg transform hover:scale-105"
+                >
+                  <div className="text-2xl font-bold text-green-600 group-hover:scale-110 transition-transform">
+                    {dashboardStats?.contacts_count ?? 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Contacts</div>
+                  {dashboardStats?.monthly_new_contacts !== undefined && dashboardStats.monthly_new_contacts > 0 && (
+                    <div className="text-xs text-green-500 font-medium mt-1">
+                      +{dashboardStats.monthly_new_contacts} ce mois
+                    </div>
+                  )}
+                </button>
+                <button
+                  onClick={() => onStatsClick('opportunities')}
+                  className="text-center p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all duration-300 group hover:shadow-lg transform hover:scale-105"
+                >
+                  <div className="text-2xl font-bold text-blue-600 group-hover:scale-110 transition-transform">
+                    {dashboardStats?.opportunities_count ?? 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Opportunités</div>
+                  {dashboardStats?.pipeline_value && (
+                    <div className="text-xs text-blue-500 font-medium mt-1">
+                      {parseFloat(dashboardStats.pipeline_value).toLocaleString('fr-FR', {
+                        style: 'currency',
+                        currency: 'EUR',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      })}
+                    </div>
+                  )}
+                </button>
+                <button
+                  onClick={() => onStatsClick('tasks')}
+                  className="text-center p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-all duration-300 group hover:shadow-lg transform hover:scale-105"
+                >
+                  <div className="text-2xl font-bold text-purple-600 group-hover:scale-110 transition-transform">
+                    {dashboardStats?.pending_tasks_count ?? 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Tâches</div>
+                  {dashboardStats?.tasks_overdue !== undefined && dashboardStats.tasks_overdue > 0 && (
+                    <div className="text-xs text-red-500 font-medium mt-1">
+                      {dashboardStats.tasks_overdue} en retard
+                    </div>
+                  )}
+                </button>
+                <button
+                  onClick={() => onStatsClick('appointments')}
+                  className="text-center p-4 bg-orange-50 rounded-xl hover:bg-orange-100 transition-all duration-300 group hover:shadow-lg transform hover:scale-105"
+                >
+                  <div className="text-2xl font-bold text-orange-600 group-hover:scale-110 transition-transform">
+                    {dashboardStats?.appointments_today ?? 0}
+                  </div>
+                  <div className="text-sm text-gray-600">RDV Aujourd'hui</div>
+                  {dashboardStats?.organisation_users !== undefined && dashboardStats.organisation_users > 1 && (
+                    <div className="text-xs text-orange-500 font-medium mt-1">
+                      {dashboardStats.organisation_users} utilisateurs
+                    </div>
+                  )}
+                </button>
+              </div>
+            )}
             </div>
           </div>
 
