@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { X, User, Mail, Phone, MapPin, Calendar, Building, CreditCard as Edit, Save, Settings, LogOut, CheckCircle, Star, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  X, Mail, Phone, MapPin, Calendar, Building, CreditCard as Edit, Save, Settings, LogOut, 
+  CheckCircle, RefreshCw, AlertCircle 
+} from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useOrganization } from '../contexts/OrganizationContext';
 import { authService } from '../services/authService';
@@ -36,7 +39,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
   
-  // Get current user data from auth service
   const currentUser = authService.getStoredUser();
   const userDisplayName = authService.getUserDisplayName();
   const userInitials = authService.getUserInitials();
@@ -44,15 +46,16 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: currentUser?.name || userDisplayName,
     email: currentUser?.email || '',
-    phone: '+33 1 23 45 67 89', // Default phone - you might want to add this to user model
-    location: 'Paris, France', // Default location - you might want to add this to user model
-    position: 'Utilisateur', // Default position - you might want to add this to user model
-    memberSince: currentUser?.created_at ? new Date(currentUser.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : 'Janvier 2024',
+    phone: '+33 1 23 45 67 89',
+    location: 'Paris, France',
+    position: 'Utilisateur',
+    memberSince: currentUser?.created_at 
+      ? new Date(currentUser.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) 
+      : 'Janvier 2024',
   });
   
   const [editedProfile, setEditedProfile] = useState<UserProfile>(userProfile);
 
-  // Load dashboard stats when sidebar opens
   useEffect(() => {
     if (isOpen && currentOrganization) {
       loadDashboardStats();
@@ -85,18 +88,14 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   const handleSaveProfile = async () => {
     try {
-      // Update the profile via auth service
       await authService.updateProfile({
         name: editedProfile.name,
         email: editedProfile.email,
       });
-      
       setUserProfile(editedProfile);
       setIsEditingProfile(false);
-      console.log('Profile saved:', editedProfile);
     } catch (error) {
       console.error('Failed to save profile:', error);
-      // You might want to show an error message to the user
     }
   };
 
@@ -107,40 +106,19 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   const getPlanBadge = (plan: string) => {
     switch (plan) {
-      case 'enterprise':
-        return 'bg-purple-100 text-purple-800';
-      case 'professional':
-        return 'bg-blue-100 text-blue-800';
-      case 'starter':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'enterprise': return 'bg-purple-100 text-purple-800';
+      case 'professional': return 'bg-blue-100 text-blue-800';
+      case 'starter': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getPlanLabel = (plan: string) => {
     switch (plan) {
-      case 'enterprise':
-        return 'Entreprise';
-      case 'professional':
-        return 'Professionnel';
-      case 'starter':
-        return 'Débutant';
-      default:
-        return plan;
-    }
-  };
-
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'owner':
-        return 'text-yellow-500';
-      case 'admin':
-        return 'text-blue-500';
-      case 'member':
-        return 'text-green-500';
-      default:
-        return 'text-gray-500';
+      case 'enterprise': return 'Entreprise';
+      case 'professional': return 'Professionnel';
+      case 'starter': return 'Débutant';
+      default: return plan;
     }
   };
 
@@ -185,36 +163,26 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         <div className="p-6">
           {/* Personal Information */}
           <div className="mb-8">
+            {/* Header + Edit Buttons */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Informations Personnelles</h3>
               {!isEditingProfile ? (
-                <button 
-                  onClick={handleEditProfile}
-                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg"
-                >
-                  <Edit size={16} />
-                  <span className="text-sm font-medium">Modifier</span>
+                <button onClick={handleEditProfile} className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg">
+                  <Edit size={16} /><span className="text-sm font-medium">Modifier</span>
                 </button>
               ) : (
                 <div className="flex items-center space-x-2">
-                  <button
-                    onClick={handleCancelEdit}
-                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-700 transition-colors px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50"
-                  >
-                    <X size={16} />
-                    <span className="text-sm font-medium">Annuler</span>
+                  <button onClick={handleCancelEdit} className="flex items-center space-x-2 text-gray-600 hover:text-gray-700 transition-colors px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
+                    <X size={16} /><span className="text-sm font-medium">Annuler</span>
                   </button>
-                  <button
-                    onClick={handleSaveProfile}
-                    className="flex items-center space-x-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors px-3 py-2 rounded-lg"
-                  >
-                    <Save size={16} />
-                    <span className="text-sm font-medium">Enregistrer</span>
+                  <button onClick={handleSaveProfile} className="flex items-center space-x-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors px-3 py-2 rounded-lg">
+                    <Save size={16} /><span className="text-sm font-medium">Enregistrer</span>
                   </button>
                 </div>
               )}
             </div>
 
+            {/* Profile Info */}
             {!isEditingProfile ? (
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
@@ -259,55 +227,25 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
               </div>
             ) : (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nom complet</label>
-                  <input
-                    type="text"
-                    value={editedProfile.name}
-                    onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Poste</label>
-                  <input
-                    type="text"
-                    value={editedProfile.position}
-                    onChange={(e) => setEditedProfile({ ...editedProfile, position: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={editedProfile.email}
-                    onChange={(e) => setEditedProfile({ ...editedProfile, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
-                  <input
-                    type="tel"
-                    value={editedProfile.phone}
-                    onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Localisation</label>
-                  <input
-                    type="text"
-                    value={editedProfile.location}
-                    onChange={(e) => setEditedProfile({ ...editedProfile, location: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
+                {['name', 'position', 'email', 'phone', 'location'].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {field === 'name' ? 'Nom complet' :
+                       field === 'position' ? 'Poste' :
+                       field === 'email' ? 'Email' :
+                       field === 'phone' ? 'Téléphone' : 'Localisation'}
+                    </label>
+                    <input
+                      type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'}
+                      value={(editedProfile as any)[field]}
+                      onChange={(e) => setEditedProfile({ ...editedProfile, [field]: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                ))}
               </div>
             )}
           </div>
-
           {/* Organization Details */}
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Organisation Actuelle</h3>
@@ -355,7 +293,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                 <RefreshCw size={16} className={statsLoading ? 'animate-spin' : ''} />
               </button>
             </div>
-            
+
             {statsError ? (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
                 <AlertCircle size={24} className="mx-auto text-red-500 mb-2" />
@@ -387,12 +325,13 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                     {dashboardStats?.contacts_count ?? 0}
                   </div>
                   <div className="text-sm text-gray-600">Contacts</div>
-                  {dashboardStats?.monthly_new_contacts !== undefined && dashboardStats.monthly_new_contacts > 0 && (
+                  {dashboardStats?.monthly_new_contacts && dashboardStats.monthly_new_contacts > 0 && (
                     <div className="text-xs text-green-500 font-medium mt-1">
                       +{dashboardStats.monthly_new_contacts} ce mois
                     </div>
                   )}
                 </button>
+
                 <button
                   onClick={() => onStatsClick('opportunities')}
                   className="text-center p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all duration-300 group hover:shadow-lg transform hover:scale-105"
@@ -412,6 +351,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                     </div>
                   )}
                 </button>
+
                 <button
                   onClick={() => onStatsClick('tasks')}
                   className="text-center p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-all duration-300 group hover:shadow-lg transform hover:scale-105"
@@ -420,12 +360,13 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                     {dashboardStats?.pending_tasks_count ?? 0}
                   </div>
                   <div className="text-sm text-gray-600">Tâches</div>
-                  {dashboardStats?.tasks_overdue !== undefined && dashboardStats.tasks_overdue > 0 && (
+                  {dashboardStats?.tasks_overdue && dashboardStats.tasks_overdue > 0 && (
                     <div className="text-xs text-red-500 font-medium mt-1">
                       {dashboardStats.tasks_overdue} en retard
                     </div>
                   )}
                 </button>
+
                 <button
                   onClick={() => onStatsClick('appointments')}
                   className="text-center p-4 bg-orange-50 rounded-xl hover:bg-orange-100 transition-all duration-300 group hover:shadow-lg transform hover:scale-105"
@@ -434,7 +375,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                     {dashboardStats?.appointments_today ?? 0}
                   </div>
                   <div className="text-sm text-gray-600">RDV Aujourd'hui</div>
-                  {dashboardStats?.organisation_users !== undefined && dashboardStats.organisation_users > 1 && (
+                  {dashboardStats?.organisation_users && dashboardStats.organisation_users > 1 && (
                     <div className="text-xs text-orange-500 font-medium mt-1">
                       {dashboardStats.organisation_users} utilisateurs
                     </div>
@@ -442,7 +383,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                 </button>
               </div>
             )}
-            </div>
           </div>
 
           {/* Actions */}
@@ -471,3 +411,4 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 };
 
 export default ProfileSidebar;
+
